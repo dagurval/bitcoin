@@ -35,6 +35,7 @@
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <iomanip>
+#include <cmath>
 #include <boost/thread.hpp>
 #include <inttypes.h>
 #include <queue>
@@ -425,6 +426,8 @@ std::string UnlimitedCmdLineHelp()
     strUsage += HelpMessageOpt("-gen", strprintf(_("Generate coins (default: %u)"), DEFAULT_GENERATE));
     strUsage += HelpMessageOpt("-genproclimit=<n>", strprintf(_("Set the number of threads for coin generation if enabled (-1 = all cores, default: %d)"), DEFAULT_GENERATE_THREADS));
     strUsage += HelpMessageOpt("-ophanpoolexpiry=<n>", strprintf(_("Do not keep transactions in the orphanpool longer than <n> hours (default: %u)"), DEFAULT_ORPHANPOOL_EXPIRY));
+    strUsage += HelpMessageOpt("-bip100", strprintf(_("Enforce BIP100 dynamic max block size by miner vote (default: %d)"), 0));
+    strUsage += HelpMessageOpt("-maxblocksizevote=<n>", _("For BIP100 miners. Set vote for maximum block size in megabytes (default: network sizelimit)"));
     strUsage += TweakCmdLineHelp();
     return strUsage;
 }
@@ -588,11 +591,24 @@ void settingsToUserAgentString()
     BUComments.clear();
 
     double ebInMegaBytes = (double)excessiveBlockSize/1000000;
+    bool bip100 = GetArg("-bip100", 0);
+    if (bip100) {
+        BUComments.push_back("BIP100");
+        uint32_t blockVote = GetArg("-maxblocksizevote", 0);
+        if (blockVote)
+            BUComments.push_back("B" + boost::lexical_cast<std::string>(blockVote));
+    }
+
     std::stringstream ebss;
-    ebss <<std::fixed << std::setprecision(1) << ebInMegaBytes;
-    std::string eb =  ebss.str();
     std::string eb_formatted;
-    eb_formatted = (eb.at(eb.size() - 1) == '0' ? eb.substr(0, eb.size() - 2) : eb); //strip zero decimal
+    if (bip100) {
+        ebss << std::setprecision(int(log10(ebInMegaBytes))+7) << ebInMegaBytes;
+        eb_formatted = ebss.str();
+    } else {
+        ebss << std::fixed << std::setprecision(1) << ebInMegaBytes;
+        std::string eb =  ebss.str();
+        eb_formatted = (eb.at(eb.size() - 1) == '0' ? eb.substr(0, eb.size() - 2) : eb); //strip zero decimal
+    }
     BUComments.push_back("EB" + eb_formatted);
 
     int ad_formatted;
@@ -660,6 +676,13 @@ void UnlimitedSetup(void)
       LogPrintf("Reducing -maxoutconnections from %d to %d, because this value is higher than max available connections.\n", nUserMaxOutConnections, nMaxConnections);
       nMaxOutConnections = nMaxConnections;
     }
+
+
+    uint64_t nMaxBlockSizeVote = GetArg("-maxblocksizevote", 0);
+    if (nMaxBlockSizeVote > 0 && !GetArg("-bip100", 0))
+        LogPrintf("Warning: Max block size vote set, but bip100 not set\n");
+    if (nMaxBlockSizeVote > 999)
+        LogPrintf("Warning: Max block size vote is very large. Units are megabytes.\n");
 
     // Start Internal CPU miner
     // Generate coins in the background

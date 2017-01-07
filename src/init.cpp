@@ -1151,8 +1151,11 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
                         CleanupBlockRevFiles();
                 }
 
-                if (!LoadBlockIndex()) {
+                bool fRebuildRequired = false;
+                if (!LoadBlockIndex(&fRebuildRequired)) {
                     strLoadError = _("Error loading block database");
+                    if (fRebuildRequired)
+                        strLoadError += _(". You need to rebuild the database using -reindex.");
                     break;
                 }
 
