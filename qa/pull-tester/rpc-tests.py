@@ -205,6 +205,7 @@ testScriptsExt = [ RpcTest(t) for t in [
     'bip65-cltv',
     'bip65-cltv-p2p',
     'bip68-sequence',
+    'bip100-sizelimit',
     'bipdersig-p2p',
     'bipdersig',
     'getblocktemplate_longpoll',
@@ -239,6 +240,7 @@ def show_wrapper_options():
     print( "  -list / --list        only list test names")
     print( "  -win / --win          signal running on Windows and run those tests")
     print( "  -h / -help / --help   print this help")
+
 
 def runtests():
     global passOn
