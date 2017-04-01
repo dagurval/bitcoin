@@ -479,6 +479,9 @@ BOOST_AUTO_TEST_CASE(CreateNewBlock_bip100str)
     settingsToUserAgentString();
     c = DefaultCoinbaseStr();
     BOOST_CHECK(c.find("/BIP100/B16/EB1/") != std::string::npos);
+
+    mapArgs.erase("-bip100");
+    mapArgs.erase("-maxblocksizevote");
 }
 
 BOOST_AUTO_TEST_SUITE_END()
