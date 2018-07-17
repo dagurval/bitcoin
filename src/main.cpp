@@ -599,7 +599,6 @@ static bool AcceptToMemoryPoolWorker(CTxMemPool &pool,
     bool *isRespend)
 {
     *isRespend = false;
-    unsigned int forkVerifyFlags = 0;
     unsigned int nSigOps = 0;
     ValidationResourceTracker resourceTracker;
     unsigned int nSize = 0;
